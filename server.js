@@ -2,8 +2,8 @@ var express = require('express'),
 	app=express(),
 	server=require('http').createServer(app),
 	io=require('socket.io').listen(server),
-	rooms={},	////////////一个roomname对应一个array，里面储存的是在这个房间内的人员的socket
-	users={};     /////////////一个username对应一个socket
+	rooms={},	////////////roomname----array锛寃hich contains all users' sockets in that room
+	users={};     ////////////username----socket
 		
 server.listen(3000);
 
