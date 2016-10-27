@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<script src="/socket.io/socket.io.js"></script>
+	
+	<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/themes/base/jquery-ui.css" type="text/css" media="all" /> 
+	<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.5.min.js" type="text/javascript"></script>
+	<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.9/jquery-ui.min.js" type="text/javascript"></script>
+
+	<style>		
+		#curRoom{
+			position: fixed; 
+			top: 0; 
+			width: 100%;
+			font-size: 30px;
+			background-color: lightblue
+		}
+		#send-message { 
+			padding: 3px; 
+			position: fixed; 
+			bottom: 0; 
+			width: 100%;
+		}
+		#send-message input { 
+			border: 1px #000 solid; 
+			padding: 10px; 
+			width: 90%; 
+			margin-right: .5%;
+		}
+        #send-message button { 
+			width: 9%; 
+			background: rgb(130, 224, 255); 
+			border: none; 
+			padding: 10px;
+		}
+		#contentWrap{
+			margin-top:50px;
+			display:none;
+		}
+		#chat{
+			float:left;
+			width: 90%;
+			background: rgb(230, 224, 255);
+			margin-bottom: 150px;
+		}
+		.alert{
+			color:red;
+		}
+	</style>
+  </head>
+  <body>
+    <div id="curRoom"></div>
+    
+	<div id="nickWrap" title="Enter Information">
+		<p id="nickError"></p>
+		<form id="setNick">
+			<label>name:</label><input id="nickname" type="text" value="">
+			<label>room</label><input id="roomname" type="text" value="">
+			<input id="submit" type="submit">
+		</form>
+	</div>
+  
+    <div id="contentWrap">
+		<div id="chatWrap">
+			<div id="chat"></div>
+			<form id='send-message'>
+			  <input id="message"></input>
+			  <button>send</button>
+			  <p>Chat Commands:<br/>
+				  <ul>
+					  <li>Change nickname: /nick [username]</li>
+					  <li>Change room: /join [room name]</li>
+				  </ul>
+			  </p>
+			</form>
+		</div>
+		<div id="rooms"></div>
+	</div>
+	</div>
+	
+	
+	<script>
+		$(function(){
+			$( "#nickWrap" ).dialog();
+			var socket=io.connect();
+			
+			var $nickForm=$('#setNick');
+			var $nickError=$('#nickError');
+			var $nickBox=$('#nickname');
+			var $roomBox=$('#roomname');
+			var $rooms=$('#rooms');
+			var $curRoom=$('#curRoom');
+			
+			var $messageForm=$('#send-message');
+			var $messageBox=$('#message');
+			var $chat=$('#chat');
+			
+			$nickForm.submit(function(e){
+				e.preventDefault();
+				socket.emit('new user', $nickBox.val(), $roomBox.val(), function(data){
+					if(data){
+						$('#nickWrap').dialog('close');
+						$('#contentWrap').show();
+					}
+					else{
+						$nickError.html('That username is already taken! Try again!');
+					}
+				});
+				$nickBox.val('');
+			});
+			
+			socket.on('curroom', function(data){
+				$curRoom.html(data);
+			});
+			
+			socket.on('roomnames', function(data){
+				var m1='';
+				for(i=0; i < data.length; i++){
+					m1+=data[i]+'<br/>'
+				}
+				$rooms.html(m1);				
+			});
+			
+			$messageForm.submit(function(e){
+				e.preventDefault();
+				socket.emit('send message', $messageBox.val(), function(data){
+					$chat.append('<span class="alert"><b>' + data + '</span><hr/>');
+				});
+				$messageBox.val('');
+			});
+			
+			socket.on('new message', function(data){
+				$chat.append('<b>' + data.nick + ': </b>' + data.msg + '<hr/>');
+			});
+		});
+	</script>
+  </body>
+</html>
